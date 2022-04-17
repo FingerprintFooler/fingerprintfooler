@@ -49,7 +49,6 @@ class DSP {
         );
         gui.add(this, "timeWin", 1, 40);
         gui.add(this, "freqWin", 1, 40);
-        gui.add(this, "useWindow");
         gui.add(this, "plotSpectrogram");
         gui.add(this, "computeAudioFeatures");
         gui.close();
