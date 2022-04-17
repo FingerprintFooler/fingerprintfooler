@@ -14,6 +14,7 @@ let progressBar = new ProgressBar();
 let origAudioPlayer = document.getElementById("origAudioPlayer");
 let beepyAudioPlayer = document.getElementById("beepyAudioPlayer");
 let audio = new SampledAudio();
+let beepyAudio = new SampledAudio();
 
 /********************************************************
  *                    TUNE MENUS                        *
@@ -31,7 +32,16 @@ function EMVecVec2Array(XEm) {
     return ret;
 }
 
+function EMVec2Array(XEm) {
+    let ret = [];
+    for (let i = 0; i < XEm.size(); i++) {
+        ret.push(XEm.get(i));
+    }
+    return ret;
+}
+
 function doDSP(samples) {
+    let sr = 44100;
     let win = 2048;
     let hop = 1024;
     let maxBin = 256;
@@ -48,17 +58,20 @@ function doDSP(samples) {
     let SEm = new Module.VectorVectorFloat();
     Module.jsGetSpectrogram(sig, SEm, win, hop, maxBin, useWindow);
     let S = EMVecVec2Array(SEm);
-    console.log(S);
 
-    let MaxesEm = new Module.VectorVectorInt();
-    Module.jsGetMaxes(SEm, MaxesEm, timeWin, freqWin);
-    let Maxes = EMVecVec2Array(MaxesEm);
-    console.log(Maxes);
+    let maxTimesEm = new Module.VectorInt();
+    let maxFreqsEm = new Module.VectorInt();
+    let yEm = new Module.VectorFloat();
+    Module.jsGetBeepyTune(SEm, yEm, samples.length, timeWin, freqWin, win, hop, sr);
+    let y = EMVec2Array(yEm);
+    beepyAudio.setSamples(y);
+    beepyAudio.connectAudioPlayer(beepyAudioPlayer);
 
-    
+    Module.clearVector(yEm);
     Module.clearVector(sig);
     Module.clearVectorVector(SEm);
-    Module.clearVectorVectorInt(MaxesEm);
+    Module.clearVectorInt(maxTimesEm);
+    Module.clearVectorInt(maxFreqsEm);
 }
 
 let exampleTuneMenu = document.getElementById("ExampleTunes");

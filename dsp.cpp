@@ -418,10 +418,7 @@ void clearVectorVector(std::vector<std::vector<float> >& M) {
     M.clear();
 }
 
-void clearVectorVectorInt(std::vector<std::vector<int> >& M) {
-    for (size_t i = 0; i < M.size(); i++) {
-        M[i].clear();
-    }
+void clearVectorInt(std::vector<int>& M) {
     M.clear();
 }
 
@@ -461,30 +458,79 @@ bool isMax(std::vector<std::vector<float>>& S, int i, int j, int timeWin, int fr
 	return true;
 }
 
-void jsGetMaxes(std::vector<std::vector<float>> S, std::vector<std::vector<int>>& maxes, int timeWin, int freqWin) {
-	for (size_t i = 0; i < S.size(); i++) {
-		for (size_t j = 0; j < S[i].size(); j++) {
+
+void jsGetMaxes(std::vector<std::vector<float>> S, std::vector<int>& maxTimes, std::vector<int>& maxFreqs, int timeWin, int freqWin) {
+	for (int i = 0; i < (int)S.size(); i++) {
+		for (int j = 0; j < (int)S[i].size(); j++) {
 			if (isMax(S, i, j, timeWin, freqWin)) {
-				std::vector<int> maxLoc(2);
-				maxLoc[0] = i;
-				maxLoc[1] = j;
-				maxes.push_back(maxLoc);
+				maxTimes.push_back(i);
+				maxFreqs.push_back(j);
 			}
 		}
 	}
 }
 
+/**
+ * @brief 
+ * 
+ * @param S NWin x NBins Spectrogram
+ * @param y Audio output to fill
+ * @param N Length of output audio
+ * @param timeWin Half length of time window to search for max
+ * @param freqWin Half length of frequency window to search for max
+ * @param win Window length of STFT
+ * @param hop Hop length of STFT
+ */
+void jsGetBeepyTune(std::vector<std::vector<float>> S, std::vector<float>& y, int N, int timeWin, int freqWin, int win, int hop, int sr) {
+	// Step 1: Setup array and windows
+	y.clear();
+	for (int i = 0; i < N; i++) {
+		y.push_back(0);
+	}
+	float* hannwindow = new float[win];
+	for (int n = 0; n < win; n++) {
+		float angle = 2.0*PI * n / (float)(win - 1);
+		//Do a hann window for now
+		hannwindow[n] = 0.54 - 0.46*cos(angle);
+	}
+
+	// Step 2: Fill in beepy tune
+	for (int i = 0; i < (int)S.size(); i++) {
+		for (int j = 0; j < (int)S[i].size(); j++) {
+			if (isMax(S, i, j, timeWin, freqWin)) {
+				int iStart = hop*i;
+				float freq = ((float)(j*sr))/win;
+				for (int k = 0; k < win; k++) {
+					y[iStart+k] += hannwindow[k]*cos(2.0*PI*freq*k/sr);
+				}
+			}
+		}
+	}
+
+	// Step 3: Normalize beepy tune to the range [0, 1]
+	float maxVal = 0;
+	for (int i = 0; i < N; i++) {
+		if (abs(y[i]) > maxVal) {
+			maxVal = abs(y[i]);
+		}
+	}
+	for (int i = 0; i < N; i++) {
+		y[i] /= maxVal;
+	}
+}
+
 EMSCRIPTEN_BINDINGS(stl_wrappers) {
     emscripten::register_vector<float>("VectorFloat");
+	emscripten::register_vector<int>("VectorInt");
     emscripten::register_vector<std::vector<float>>("VectorVectorFloat");
-	emscripten::register_vector<std::vector<int>>("VectorVectorInt");
 }
 
 
 EMSCRIPTEN_BINDINGS(my_module) {
     function("jsGetSpectrogram", &jsGetSpectrogram);
 	function("jsGetMaxes", &jsGetMaxes);
+	function("jsGetBeepyTune", &jsGetBeepyTune);
 	function("clearVector", &clearVector);
 	function("clearVectorVector", &clearVectorVector);
-	function("clearVectorVectorInt", &clearVectorVectorInt);
+	function("clearVectorInt", &clearVectorInt);
 }
