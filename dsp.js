@@ -80,6 +80,22 @@ class DSP {
                         that.maxTimes = event.data.maxTimes;
                         that.maxFreqs = event.data.maxFreqs;
                     }
+                    const downloadArea = document.getElementById("downloadArea");
+                    let samples = new Float32Array(event.data.y);
+                    // get WAV file bytes and audio params of your audio source
+                    const wavBytes = getWavBytes(samples.buffer, {
+                      isFloat: true,       // floating point or 16-bit integer
+                      numChannels: 1,
+                      sampleRate: audio.sr,
+                    })
+                    const wav = new Blob([wavBytes], {type: 'audio/wav'});
+                    // Create download link and append to DOM
+                    const a = document.createElement('a');
+                    a.href = window.URL.createObjectURL(wav);
+                    a.download = 'beepy.wav';
+                    a.innerHTML = "Click here to download";
+                    downloadArea.innerHTML = "";
+                    downloadArea.appendChild(a);
                     resolve();
                 }
             }
