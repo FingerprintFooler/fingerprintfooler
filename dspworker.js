@@ -1,3 +1,7 @@
+/**
+ * Code copyright Christopher J. Tralie, 2021
+ * Attribution-NonCommercial-ShareAlike 4.0 International
+ */
 importScripts("dspem.js");
 
 onmessage = function(event) {

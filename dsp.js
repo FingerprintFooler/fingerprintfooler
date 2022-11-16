@@ -1,3 +1,8 @@
+/**
+ * Code copyright Christopher J. Tralie, 2021
+ * Attribution-NonCommercial-ShareAlike 4.0 International
+ */
+
 const READY_STR = "Ready! Press Play on The Original Tune Or on The Beepy Tune!"
 
 class DSP {
